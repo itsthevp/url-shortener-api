@@ -1,0 +1,10 @@
+{
+    "terminal.integrated.defaultProfile.windows": "Command Prompt",
+    "python.formatting.provider": "black",
+    "python.formatting.blackPath": "black",
+    "[python]": {
+        "editor.formatOnSave": true
+    },
+    "copyrightInserter.holder": "Vishv Patel (https://github.com/itsthevp)",
+    "copyrightInserter.license": "mit"
+}
