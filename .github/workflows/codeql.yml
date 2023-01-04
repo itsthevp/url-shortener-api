@@ -39,8 +39,17 @@ jobs:
         # Learn more about CodeQL language support at https://aka.ms/codeql-docs/language-support
 
     steps:
+
     - name: Checkout repository
       uses: actions/checkout@v3
+
+      # Added By Vishv Patel
+    - name: Setup python 3.9
+      uses: actions/setup-python@v4
+      with:
+        python-version: 3.9
+        cache: 'pip'
+    - run: pip install -r requirements.txt
 
     # Initializes the CodeQL tools for scanning.
     - name: Initialize CodeQL
