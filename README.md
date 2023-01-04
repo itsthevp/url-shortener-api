@@ -1,2 +1,1 @@
-# finance-manager
-Personal Finance Manager
+# Finance Manager REST API
