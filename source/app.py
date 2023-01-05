@@ -29,3 +29,4 @@ app = Flask(__name__)
 # Loading Configs
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = environ["SQLALCHEMY_DATABASE_URI"]
+app.config["BUNDLE_ERRORS"] = True
