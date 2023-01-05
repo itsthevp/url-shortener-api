@@ -24,3 +24,4 @@ tomli==2.0.1
 typing_extensions==4.4.0
 Werkzeug==2.2.2
 zipp==3.11.0
+psycopg2==2.9.5
