@@ -21,12 +21,22 @@
 
 from flask import Flask
 from os import environ
+from secrets import token_urlsafe
+from datetime import timedelta
 
 
 app = Flask(__name__)
 
 
-# Loading Configs
+# SQLALCHEMY Configs
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SQLALCHEMY_DATABASE_URI"] = environ["SQLALCHEMY_DATABASE_URI"]
+
+# Flask-Restx Configs
 app.config["BUNDLE_ERRORS"] = True
+app.config["RESTX_VALIDATE"] = True
+
+# JWT Extended Configs
+app.config["JWT_SECRET_KEY"] = token_urlsafe(32)
+app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
+app.config["JWT_BLACKLIST_ENABLED"] = True
