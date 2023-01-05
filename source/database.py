@@ -20,6 +20,37 @@
  """
 
 from flask_sqlalchemy import SQLAlchemy
+from datetime import datetime
 
 
 db = SQLAlchemy()
+
+
+class UserModel(db.Model):
+    __tablename__ = "users"
+
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    first_name = db.Column(db.String(20), nullable=False)
+    last_name = db.Column(db.String(20), nullable=False)
+    username = db.Column(db.String(20), nullable=False, unique=True)
+    password = db.Column(db.String(20), nullable=False)
+    verified = db.Column(db.Boolean(), default=False)
+    active = db.Column(db.Boolean(), default=False)
+    created = db.Column(db.DateTime(), default=datetime.utcnow())
+
+    urls = db.relationship(
+        "urls", back_populates="user", cascade="all, delete-orphan", lazy="dynamic"
+    )
+
+
+class URLModel(db.Model):
+    __tablename__ = "urls"
+
+    id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
+    slug = db.Column(db.String(10), nullable=False, unique=True, index=True)
+    target = db.Column(db.Text(), nullable=False)
+    active = db.Column(db.Boolean(), default=True)
+    visit_count = db.Column(db.Integer(), default=0)
+    user_id = db.Column(db.Integer(), db.ForeignKey("users.id"), nullable=False)
+
+    user = db.relationship("users", back_populates="urls")

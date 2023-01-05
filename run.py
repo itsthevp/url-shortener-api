@@ -28,6 +28,7 @@ from source.urls import endpoints
 # Initializing Factory Instances
 with app.app_context():
     db.init_app(app)
+    db.create_all()
     api.init_app(app)
 
 
