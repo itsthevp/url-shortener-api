@@ -19,20 +19,23 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
-from source.app import app
-from source.database import db
+from flask_restx import fields
+
 from source.api import api
-from source.jwt import jwt
 
 
-# Initializing Factory Instances
-with app.app_context():
-    db.init_app(app)
-    db.create_all()
-    api.init_app(app)
-    jwt.init_app(app)
-    import source.resources
+login_response = api.model(
+    "LoginResponse", {"access_token": fields.String, "usage": fields.String}
+)
 
-
-if __name__ == "__main__":
-    app.run()
+register_response = api.model(
+    "RegisterResponse",
+    {
+        "id": fields.String,
+        "first_name": fields.String,
+        "last_name": fields.String,
+        "username": fields.String,
+        "email": fields.String,
+        "created": fields.DateTime,
+    },
+)

@@ -19,7 +19,24 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
-from source.resources import Index
+from flask_restx.reqparse import RequestParser
+
+from source.validators import username_validator, email_validator, password_validator
 
 
-endpoints = {"index": (Index, "/")}
+login_parser = RequestParser(trim=True)
+login_parser.add_argument("username", type=str, required=True, location="json")
+login_parser.add_argument("password", type=str, required=True, location="json")
+
+register_parser = RequestParser(trim=True)
+register_parser.add_argument("first_name", type=str, required=True, location="json")
+register_parser.add_argument("last_name", type=str, required=True, location="json")
+register_parser.add_argument(
+    "email", type=email_validator, required=True, location="json"
+)
+register_parser.add_argument(
+    "username", type=username_validator, required=True, location="json"
+)
+register_parser.add_argument(
+    "password", type=password_validator, required=True, location="json"
+)
