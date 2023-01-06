@@ -26,7 +26,20 @@ from datetime import datetime
 db = SQLAlchemy()
 
 
-class UserModel(db.Model):
+class ModelMixin:
+    @classmethod
+    def add(cls, obj):
+        added = False
+        try:
+            db.session.add(obj)
+            db.session.commit()
+            added = True
+        except Exception as ex:
+            print("Failed to insert into database\nException: ", str(ex))
+        return added
+
+
+class UserModel(db.Model, ModelMixin):
     __tablename__ = "users"
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
@@ -40,11 +53,11 @@ class UserModel(db.Model):
     created = db.Column(db.DateTime(), default=datetime.utcnow())
 
     urls = db.relationship(
-        "urls", back_populates="user", cascade="all, delete-orphan", lazy="dynamic"
+        "URLModel", back_populates="user", cascade="all, delete-orphan", lazy="dynamic"
     )
 
 
-class URLModel(db.Model):
+class URLModel(db.Model, ModelMixin):
     __tablename__ = "urls"
 
     id = db.Column(db.Integer(), primary_key=True, autoincrement=True)
@@ -54,4 +67,4 @@ class URLModel(db.Model):
     visit_count = db.Column(db.Integer(), default=0)
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id"), nullable=False)
 
-    user = db.relationship("users", back_populates="urls")
+    user = db.relationship("UserModel", back_populates="urls")
