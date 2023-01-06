@@ -38,7 +38,7 @@ def user_identity_callback(user: UserModel):
 @jwt.user_lookup_loader
 def user_lookup_callback(_header, payload):
     identity = payload["sub"]
-    return UserModel.query.filter_by(UserModel.id == identity).one_or_none()
+    return UserModel.query.filter_by(id=identity).one_or_none()
 
 
 @jwt.token_in_blocklist_loader

@@ -40,3 +40,4 @@ app.config["RESTX_VALIDATE"] = True
 app.config["JWT_SECRET_KEY"] = token_urlsafe(32)
 app.config["JWT_ACCESS_TOKEN_EXPIRES"] = timedelta(minutes=30)
 app.config["JWT_BLACKLIST_ENABLED"] = True
+app.config["PROPAGATE_EXCEPTIONS"] = True
