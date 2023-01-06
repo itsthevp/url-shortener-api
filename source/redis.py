@@ -21,28 +21,7 @@
 
 from os import environ
 
-from flask_jwt_extended import JWTManager
-
-from source.redis import jwt_redis_blocklist
-from source.database import UserModel
+from redis import StrictRedis
 
 
-jwt = JWTManager()
-
-
-@jwt.user_identity_loader
-def user_identity_callback(user: UserModel):
-    return user.id
-
-
-@jwt.user_lookup_loader
-def user_lookup_callback(_header, payload):
-    identity = payload["sub"]
-    return UserModel.query.filter_by(UserModel.id == identity).one_or_none()
-
-
-@jwt.token_in_blocklist_loader
-def token_lookup_callback(_header, payload):
-    jti = payload["jti"]
-    token_in_redis = jwt_redis_blocklist.get(jti)
-    return token_in_redis is not None
+jwt_redis_blocklist = StrictRedis.from_url(environ["REDIS_URI"])
