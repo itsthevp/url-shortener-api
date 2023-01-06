@@ -19,25 +19,31 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
-from source.app import app
-from source.database import db
-from source.api import api
-from source.jwt import jwt
-from source.urls import endpoints
+from os import environ
+
+from flask_jwt_extended import JWTManager
+from redis import StrictRedis
+
+from source.database import UserModel
 
 
-# Initializing Factory Instances
-with app.app_context():
-    db.init_app(app)
-    db.create_all()
-    api.init_app(app)
-    jwt.init_app(app)
+jwt = JWTManager()
+jwt_redis_blocklist = StrictRedis.from_url(environ["REDIS_URI"])
 
 
-# Registering Endpoints
-for endpoint, value in endpoints.items():
-    api.add_resource(*value, endpoint=endpoint)
+@jwt.user_identity_loader
+def user_identity_callback(user: UserModel):
+    return user.id
 
 
-if __name__ == "__main__":
-    app.run()
+@jwt.user_lookup_loader
+def user_lookup_callback(_header, payload):
+    identity = payload["sub"]
+    return UserModel.query.filter_by(UserModel.id == identity).one_or_none()
+
+
+@jwt.token_in_blocklist_loader
+def token_lookup_callback(_header, payload):
+    jti = payload["jti"]
+    token_in_redis = jwt_redis_blocklist.get(jti)
+    return token_in_redis is not None
