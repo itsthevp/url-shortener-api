@@ -21,7 +21,12 @@
 
 from flask_restx.reqparse import RequestParser
 
-from source.validators import username_validator, email_validator, password_validator
+from source.validators import (
+    username_validator,
+    email_validator,
+    password_validator,
+    url_validator,
+)
 
 
 login_parser = RequestParser(trim=True)
@@ -39,4 +44,14 @@ register_parser.add_argument(
 )
 register_parser.add_argument(
     "password", type=password_validator, required=True, location="json"
+)
+
+short_url_parser = RequestParser(trim=True)
+short_url_parser.add_argument(
+    "url", dest="target", type=url_validator, required=True, location="json"
+)
+short_url_parser.add_argument(
+    "active",
+    type=lambda v: v is not None and str(v).lower() in ("true", 1),
+    location="json",
 )
