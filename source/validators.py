@@ -66,3 +66,19 @@ def password_validator(password):
         raise ValueError("password must be between 8 to 20 characters.")
 
     return password
+
+
+def url_validator(url):
+    url = str(url)
+    regex = (
+        "((http|https)://)(www.)?"
+        + "[a-zA-Z0-9@:%._\\+~#?&//=]"
+        + "{2,256}\\.[a-z]"
+        + "{2,6}\\b([-a-zA-Z0-9@:%"
+        + "._\\+~#?&//=]*)"
+    )
+
+    if not fullmatch(regex, url):
+        raise ValueError("Target URL is invalid.")
+
+    return url
