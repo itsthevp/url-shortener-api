@@ -20,6 +20,7 @@
  """
 
 from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy.exc import SQLAlchemyError
 from datetime import datetime
 
 
@@ -27,16 +28,25 @@ db = SQLAlchemy()
 
 
 class ModelMixin:
-    @classmethod
-    def add(cls, obj):
-        added = False
+    def save_in_db(self) -> bool:
+        db.session.add(self)
+        return self.__commit()
+
+    def update_in_db(self) -> bool:
+        return self.__commit()
+
+    def delete_from_db(self) -> bool:
+        db.session.delete(self)
+        return self.__commit()
+
+    def __commit(self) -> bool:
         try:
-            db.session.add(obj)
             db.session.commit()
-            added = True
-        except Exception as ex:
-            print("Failed to insert into database\nException: ", str(ex))
-        return added
+            return True
+        except SQLAlchemyError as err:
+            db.session.rollback()
+            print(f"Transaction Failed\nReason: {str(err)}")
+            return False
 
 
 class UserModel(db.Model, ModelMixin):

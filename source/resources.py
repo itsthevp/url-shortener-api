@@ -80,7 +80,7 @@ class Register(Resource):
     def post(self):
         data = register_parser.parse_args(strict=True)
         user = UserModel(**data)
-        added = UserModel.add(user)
+        added = user.save_in_db()
         if added:
             return user, 201
         return dict(message="Please try again after sometime"), 500
