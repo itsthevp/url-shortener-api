@@ -19,7 +19,7 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
-from flask_restx import fields
+from flask_restx import fields, Model
 
 from source.api import api
 
@@ -28,14 +28,43 @@ login_response = api.model(
     "LoginResponse", {"access_token": fields.String, "usage": fields.String}
 )
 
-register_response = api.model(
-    "RegisterResponse",
+url_basic_response = api.model(
+    "URLBasicResponse",
     {
-        "id": fields.String,
+        "id": fields.Integer,
+        "slug": fields.String,
+        "target": fields.String,
+    },
+)
+
+url_detailed_response = api.inherit(
+    "URLDetailedResponse",
+    url_basic_response,
+    {
+        "active": fields.Boolean,
+        "visit_count": fields.Integer,
+    },
+)
+
+user_basic_response = api.model(
+    "UserBasicResponse",
+    {
+        "id": fields.Integer,
         "first_name": fields.String,
         "last_name": fields.String,
         "username": fields.String,
         "email": fields.String,
-        "created": fields.DateTime,
     },
+)
+
+user_registered_response = api.inherit(
+    "UserRegisteredResponse",
+    user_basic_response,
+    {"created": fields.DateTime, "active": fields.Boolean, "verified": fields.Boolean},
+)
+
+user_detailed_response = api.inherit(
+    "UserDetailedResponse",
+    user_registered_response,
+    {"urls": fields.List(fields.Nested(url_basic_response))},
 )
