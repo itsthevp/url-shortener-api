@@ -82,3 +82,7 @@ def url_validator(url):
         raise ValueError("Target URL is invalid.")
 
     return url
+
+
+def bool_validator(value):
+    return value is not None and str(value).lower() in ("true", 1)

@@ -26,6 +26,7 @@ from source.validators import (
     email_validator,
     password_validator,
     url_validator,
+    bool_validator,
 )
 
 
@@ -52,7 +53,7 @@ short_url_parser.add_argument(
 )
 short_url_parser.add_argument(
     "active",
-    type=lambda v: v is not None and str(v).lower() in ("true", 1),
+    type=bool_validator,
     location="json",
 )
 
@@ -61,3 +62,11 @@ user_update_parser.add_argument("first_name", type=str, location="json")
 user_update_parser.add_argument("last_name", type=str, location="json")
 user_update_parser.add_argument("email", type=email_validator, location="json")
 user_update_parser.add_argument("password", type=password_validator, location="json")
+
+url_update_parser = RequestParser(trim=True)
+url_update_parser.add_argument("slug", type=str, location="json")
+url_update_parser.add_argument(
+    "active",
+    type=bool_validator,
+    location="json",
+)

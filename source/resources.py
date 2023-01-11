@@ -32,6 +32,7 @@ from source.parsers import (
     login_parser,
     register_parser,
     short_url_parser,
+    url_update_parser,
     user_update_parser,
 )
 from source.marshallers import (
@@ -145,7 +146,7 @@ class User(Resource):
         return None, 200 if deleted else 304
 
 
-@api.route("/go/<string:slug>", endpoint="go")
+@api.route("/url/go/<string:slug>", endpoint="go")
 class Go(Resource):
     @api.response(200, "Success", url_basic_response)
     @api.response(404, "Not Found")
@@ -159,7 +160,7 @@ class Go(Resource):
         return None, 404
 
 
-@api.route("/short", endpoint="short")
+@api.route("/url/short", endpoint="short")
 class Short(Resource):
     @jwt_required()
     @api.expect(short_url_parser)
@@ -168,14 +169,14 @@ class Short(Resource):
     def post(self):
         data = short_url_parser.parse_args(strict=True)
         url = URLModel(**data)
-        url.slug = self.get_unique_slug()
+        url.slug = self.__get_unique_slug()
         url.user_id = current_user.id
         saved = url.save_in_db()
         if saved:
             return marshal(url, url_detailed_response), 201
         return dict(message="Please try again after sometime"), 500
 
-    def get_unique_slug(self):
+    def __get_unique_slug(self):
         base_62_str = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789"
         slug = ""
         timestamp_ns = time_ns()
@@ -183,3 +184,55 @@ class Short(Resource):
             slug += base_62_str[timestamp_ns % 62]
             timestamp_ns //= 62
         return slug[:7]
+
+
+@api.route("/url/<int:url_id>", endpoint="url")
+class URL(Resource):
+    @jwt_required()
+    @api.response(200, "Success", url_detailed_response)
+    @api.response(404, "Not Found")
+    def get(self, url_id: int):
+        url = self.__get_url_object(current_user.id, url_id)
+        if url:
+            return marshal(url, url_detailed_response), 200
+        return None, 404
+
+    @jwt_required()
+    @api.expect(url_update_parser)
+    @api.response(200, "Success", url_detailed_response)
+    @api.response(304, "Not Modified")
+    @api.response(400, "Bad Request")
+    @api.response(404, "Not Found")
+    def patch(self, url_id: int):
+        data = url_update_parser.parse_args(strict=True)
+        if not any(v is not None for v in data.values()):
+            return None, 304
+        url = self.__get_url_object(current_user.id, url_id)
+        if url:
+            url.active = (
+                data["active"] if data.get("active") is not None else url.active
+            )
+            if data.get("slug") and data["slug"] != url.slug and data["slug"].isalnum():
+                slug_exists = URLModel.query.filter_by(slug=data["slug"]).one_or_none()
+                if not slug_exists:
+                    url.slug = data["slug"]
+                else:
+                    return dict(message="slug already exists"), 400
+            url.update_in_db()
+            return marshal(url, url_detailed_response), 200
+        return None, 404
+
+    @jwt_required()
+    @api.response(200, "Success")
+    @api.response(304, "Not Modified")
+    def delete(self, url_id: int):
+        url = self.__get_url_object(current_user.id, url_id)
+        if url:
+            url.active = False
+            updated = url.update_in_db()
+        return None, 200 if updated else 304
+
+    def __get_url_object(self, user_id: int, url_id: int):
+        return URLModel.query.filter(
+            URLModel.id == url_id, URLModel.user_id == user_id
+        ).one_or_none()
