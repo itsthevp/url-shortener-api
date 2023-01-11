@@ -19,7 +19,7 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
-from flask_restx import Api
+from flask_restx import Api, Namespace
 
 
 api = Api(
@@ -28,3 +28,26 @@ api = Api(
     catch_all_404s=True,
     serve_challenge_on_401=True,
 )
+
+user_namespace = Namespace(
+    name="User Namespace",
+    description=(
+        "This namespace contains the endpoints related to USER"
+        "\nNote: All endpoints are protected and requires valid JWT in Authorization Header as Bearer"
+    ),
+    path="/user",
+    ordered=True,
+)
+
+url_namespace = Namespace(
+    name="URL Namespace",
+    description=(
+        "This namespace contains the endpoints related to URL"
+        "\nNote: All endpoints are protected and requires valid JWT in Authorization Header as Bearer"
+    ),
+    path="/url",
+    ordered=True,
+)
+
+api.add_namespace(user_namespace)
+api.add_namespace(url_namespace)

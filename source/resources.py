@@ -25,7 +25,7 @@ from time import time_ns
 from flask_restx import Resource, marshal
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, current_user
 
-from source.api import api
+from source.api import api, url_namespace, user_namespace
 from source.database import UserModel, URLModel
 from source.jwt import blocklist_token
 from source.parsers import (
@@ -52,11 +52,25 @@ class Index(Resource):
         return None, 204
 
 
-@api.route("/user/login", endpoint="login")
+@api.route("/go/<string:slug>", endpoint="go")
+class Go(Resource):
+    @api.response(200, "Success", url_basic_response)
+    @api.response(404, "Not Found")
+    def get(self, slug: str):
+        if slug and slug.isalnum():
+            url = URLModel.query.filter_by(slug=slug).one_or_none()
+            if url and url.active:
+                url.visit_count += 1
+                url.update_in_db()
+                return marshal(url, url_basic_response), 200
+        return None, 404
+
+
+@user_namespace.route("/login", endpoint="login")
 class Login(Resource):
-    @api.expect(login_parser)
-    @api.response(200, "Success", login_response)
-    @api.response(400, "Bad Request")
+    @user_namespace.expect(login_parser)
+    @user_namespace.response(200, "Success", login_response)
+    @user_namespace.response(400, "Bad Request")
     def post(self):
         data = login_parser.parse_args(strict=True)
         user = UserModel.query.filter(
@@ -79,10 +93,10 @@ class Login(Resource):
         return dict(message="Invalid credentials"), 400
 
 
-@api.route("/user/logout", endpoint="logout")
+@user_namespace.route("/logout", endpoint="logout")
 class Logout(Resource):
     @jwt_required(optional=True)
-    @api.response(204, "No Content")
+    @user_namespace.response(204, "No Content")
     def get(self):
         jwt = get_jwt()
         if jwt:
@@ -90,12 +104,12 @@ class Logout(Resource):
         return None, 204
 
 
-@api.route("/user/register", endpoint="register")
+@user_namespace.route("/register", endpoint="register")
 class Register(Resource):
-    @api.expect(register_parser)
-    @api.response(201, "Success", user_registered_response)
-    @api.response(400, "Bad Request")
-    @api.response(500, "Server Error")
+    @user_namespace.expect(register_parser)
+    @user_namespace.response(201, "Success", user_registered_response)
+    @user_namespace.response(400, "Bad Request")
+    @user_namespace.response(500, "Server Error")
     def post(self):
         data = register_parser.parse_args(strict=True)
         user = UserModel(**data)
@@ -105,19 +119,21 @@ class Register(Resource):
         return dict(message="Please try again after sometime"), 500
 
 
-@api.route("/user", endpoint="user")
+@user_namespace.route("/", endpoint="user")
 class User(Resource):
     @jwt_required()
-    @api.marshal_with(user_detailed_response, code=200, description="Success")
+    @user_namespace.marshal_with(
+        user_detailed_response, code=200, description="Success"
+    )
     def get(self):
         current_user.urls.all()
         return current_user
 
     @jwt_required()
-    @api.expect(user_update_parser)
-    @api.response(200, "Success", user_basic_response)
-    @api.response(304, "Not Modified")
-    @api.response(400, "Bad Request")
+    @user_namespace.expect(user_update_parser)
+    @user_namespace.response(200, "Success", user_basic_response)
+    @user_namespace.response(304, "Not Modified")
+    @user_namespace.response(400, "Bad Request")
     def patch(self):
         data = user_update_parser.parse_args()
         if not any(data.values()):
@@ -137,8 +153,8 @@ class User(Resource):
             return marshal(current_user, user_basic_response), 200
 
     @jwt_required()
-    @api.response(200, "Success")
-    @api.response(304, "Not Modified")
+    @user_namespace.response(200, "Success")
+    @user_namespace.response(304, "Not Modified")
     def delete(self):
         deleted = current_user.delete_from_db()
         if deleted:
@@ -146,26 +162,12 @@ class User(Resource):
         return None, 200 if deleted else 304
 
 
-@api.route("/url/go/<string:slug>", endpoint="go")
-class Go(Resource):
-    @api.response(200, "Success", url_basic_response)
-    @api.response(404, "Not Found")
-    def get(self, slug: str):
-        if slug and slug.isalnum():
-            url = URLModel.query.filter_by(slug=slug).one_or_none()
-            if url and url.active:
-                url.visit_count += 1
-                url.update_in_db()
-                return marshal(url, url_basic_response), 200
-        return None, 404
-
-
-@api.route("/url/short", endpoint="short")
+@url_namespace.route("/short", endpoint="short")
 class Short(Resource):
     @jwt_required()
-    @api.expect(short_url_parser)
-    @api.response(201, "Success", url_detailed_response)
-    @api.response(500, "Server Error")
+    @url_namespace.expect(short_url_parser)
+    @url_namespace.response(201, "Success", url_detailed_response)
+    @url_namespace.response(500, "Server Error")
     def post(self):
         data = short_url_parser.parse_args(strict=True)
         url = URLModel(**data)
@@ -186,11 +188,11 @@ class Short(Resource):
         return slug[:7]
 
 
-@api.route("/url/<int:url_id>", endpoint="url")
+@url_namespace.route("/<int:url_id>", endpoint="url")
 class URL(Resource):
     @jwt_required()
-    @api.response(200, "Success", url_detailed_response)
-    @api.response(404, "Not Found")
+    @url_namespace.response(200, "Success", url_detailed_response)
+    @url_namespace.response(404, "Not Found")
     def get(self, url_id: int):
         url = self.__get_url_object(current_user.id, url_id)
         if url:
@@ -198,11 +200,11 @@ class URL(Resource):
         return None, 404
 
     @jwt_required()
-    @api.expect(url_update_parser)
-    @api.response(200, "Success", url_detailed_response)
-    @api.response(304, "Not Modified")
-    @api.response(400, "Bad Request")
-    @api.response(404, "Not Found")
+    @url_namespace.expect(url_update_parser)
+    @url_namespace.response(200, "Success", url_detailed_response)
+    @url_namespace.response(304, "Not Modified")
+    @url_namespace.response(400, "Bad Request")
+    @url_namespace.response(404, "Not Found")
     def patch(self, url_id: int):
         data = url_update_parser.parse_args(strict=True)
         if not any(v is not None for v in data.values()):
@@ -223,8 +225,8 @@ class URL(Resource):
         return None, 404
 
     @jwt_required()
-    @api.response(200, "Success")
-    @api.response(304, "Not Modified")
+    @url_namespace.response(200, "Success")
+    @url_namespace.response(304, "Not Modified")
     def delete(self, url_id: int):
         url = self.__get_url_object(current_user.id, url_id)
         if url:
