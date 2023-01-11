@@ -27,8 +27,13 @@ from flask_jwt_extended import create_access_token, jwt_required, get_jwt, curre
 
 from source.api import api
 from source.database import UserModel, URLModel
-from source.redis import jwt_redis_blocklist
-from source.parsers import login_parser, register_parser, short_url_parser
+from source.jwt import blocklist_token
+from source.parsers import (
+    login_parser,
+    register_parser,
+    short_url_parser,
+    user_update_parser,
+)
 from source.marshallers import (
     login_response,
     user_basic_response,
@@ -41,8 +46,9 @@ from source.marshallers import (
 
 @api.route("/", endpoint="index")
 class Index(Resource):
+    @api.response(204, "No Content")
     def get(self):
-        return None
+        return None, 204
 
 
 @api.route("/user/login", endpoint="login")
@@ -75,11 +81,12 @@ class Login(Resource):
 @api.route("/user/logout", endpoint="logout")
 class Logout(Resource):
     @jwt_required(optional=True)
+    @api.response(204, "No Content")
     def get(self):
         jwt = get_jwt()
         if jwt:
-            jwt_redis_blocklist.set(name=jwt["jti"], value="", ex=timedelta(minutes=30))
-        return dict(message="OK"), 200
+            blocklist_token(jwt["jti"])
+        return None, 204
 
 
 @api.route("/user/register", endpoint="register")
@@ -97,22 +104,45 @@ class Register(Resource):
         return dict(message="Please try again after sometime"), 500
 
 
-@api.route("/user/<int:user_id>", endpoint="user")
+@api.route("/user", endpoint="user")
 class User(Resource):
     @jwt_required()
-    @api.response(200, "Success", user_detailed_response)
-    def get(self, user_id: int):
-        ...
+    @api.marshal_with(user_detailed_response, code=200, description="Success")
+    def get(self):
+        current_user.urls.all()
+        return current_user
 
     @jwt_required()
+    @api.expect(user_update_parser)
     @api.response(200, "Success", user_basic_response)
-    def patch(self, user_id: int):
-        ...
+    @api.response(304, "Not Modified")
+    @api.response(400, "Bad Request")
+    def patch(self):
+        data = user_update_parser.parse_args()
+        if not any(data.values()):
+            return None, 304
+        elif (
+            "email" in data
+            and current_user.email != data["email"]
+            and UserModel.query.filter_by(email=data["email"]).one_or_none() is not None
+        ):
+            return dict(message="email address already exists."), 400
+        else:
+            current_user.first_name = data.get("first_name") or current_user.first_name
+            current_user.last_name = data.get("last_name") or current_user.last_name
+            current_user.email = data.get("email") or current_user.email
+            current_user.password = data.get("password") or current_user.password
+            current_user.update_in_db()
+            return marshal(current_user, user_basic_response), 200
 
     @jwt_required()
     @api.response(200, "Success")
-    def delete(self, user_id: int):
-        ...
+    @api.response(304, "Not Modified")
+    def delete(self):
+        deleted = current_user.delete_from_db()
+        if deleted:
+            blocklist_token(get_jwt()["jti"])
+        return None, 200 if deleted else 304
 
 
 @api.route("/go/<string:slug>", endpoint="go")

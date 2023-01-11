@@ -19,7 +19,7 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
-from os import environ
+from datetime import timedelta
 
 from flask_jwt_extended import JWTManager
 
@@ -46,3 +46,7 @@ def token_lookup_callback(_header, payload):
     jti = payload["jti"]
     token_in_redis = jwt_redis_blocklist.get(jti)
     return token_in_redis is not None
+
+
+def blocklist_token(jti):
+    jwt_redis_blocklist.set(name=jti, value="", ex=timedelta(minutes=30))
