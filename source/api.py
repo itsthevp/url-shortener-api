@@ -23,14 +23,19 @@ from flask_restx import Api, Namespace
 
 
 api = Api(
+    version="1.0.0",
+    title="URL Shortener",
+    description="REST endpoints for URL Shortener",
     prefix="/api",
-    doc="/swagger",
+    doc="/api/swagger",
     catch_all_404s=True,
     serve_challenge_on_401=True,
+    default="Public",
+    default_label="This namespace contains the endpoints which are public and accessible without any authorization",
 )
 
 user_namespace = Namespace(
-    name="User Namespace",
+    name="User",
     description=(
         "This namespace contains the endpoints related to USER"
         "\nNote: All endpoints are protected and requires valid JWT in Authorization Header as Bearer"
@@ -40,7 +45,7 @@ user_namespace = Namespace(
 )
 
 url_namespace = Namespace(
-    name="URL Namespace",
+    name="URL",
     description=(
         "This namespace contains the endpoints related to URL"
         "\nNote: All endpoints are protected and requires valid JWT in Authorization Header as Bearer"
