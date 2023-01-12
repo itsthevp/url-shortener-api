@@ -57,7 +57,7 @@ class UserModel(db.Model, ModelMixin):
     last_name = db.Column(db.String(20), nullable=False)
     email = db.Column(db.String(50), nullable=False, unique=True)
     username = db.Column(db.String(20), nullable=False, unique=True)
-    password = db.Column(db.String(20), nullable=False)
+    password = db.Column(db.String(102), nullable=False)
     verified = db.Column(db.Boolean(), default=False)
     active = db.Column(db.Boolean(), default=False)
     created = db.Column(db.DateTime(), default=datetime.utcnow())

@@ -24,6 +24,7 @@ from time import time_ns
 
 from flask_restx import Resource, marshal
 from flask_jwt_extended import create_access_token, jwt_required, get_jwt, current_user
+from werkzeug.security import generate_password_hash, check_password_hash
 
 from source.api import api, url_namespace, user_namespace
 from source.database import UserModel, URLModel
@@ -73,11 +74,8 @@ class Login(Resource):
     @user_namespace.response(400, "Bad Request")
     def post(self):
         data = login_parser.parse_args(strict=True)
-        user = UserModel.query.filter(
-            UserModel.username == data["username"],
-            UserModel.password == data["password"],
-        ).one_or_none()
-        if user:
+        user = UserModel.query.filter_by(username=data["username"]).one_or_none()
+        if user and check_password_hash(user.password, data["password"]):
             return (
                 marshal(
                     dict(
@@ -112,6 +110,7 @@ class Register(Resource):
     @user_namespace.response(500, "Server Error")
     def post(self):
         data = register_parser.parse_args(strict=True)
+        data["password"] = generate_password_hash(data["password"])
         user = UserModel(**data)
         added = user.save_in_db()
         if added:
