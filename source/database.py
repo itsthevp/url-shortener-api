@@ -29,13 +29,28 @@ db = SQLAlchemy()
 
 class ModelMixin:
     def save_in_db(self) -> bool:
+        """saves the object in database
+
+        Returns:
+            bool: True if inserted successfully False otherwise
+        """
         db.session.add(self)
         return self.__commit()
 
     def update_in_db(self) -> bool:
+        """updates the object in database
+
+        Returns:
+            bool: True if updated successfully False otherwise
+        """
         return self.__commit()
 
     def delete_from_db(self) -> bool:
+        """deletes the object in database
+
+        Returns:
+            bool: True if deleted successfully False otherwise
+        """
         db.session.delete(self)
         return self.__commit()
 

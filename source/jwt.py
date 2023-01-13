@@ -20,6 +20,7 @@
  """
 
 from datetime import timedelta
+from typing import Union
 
 from flask_jwt_extended import JWTManager
 
@@ -31,22 +32,27 @@ jwt = JWTManager()
 
 
 @jwt.user_identity_loader
-def user_identity_callback(user: UserModel):
+def user_identity_callback(user: UserModel) -> int:
     return user.id
 
 
 @jwt.user_lookup_loader
-def user_lookup_callback(_header, payload):
+def user_lookup_callback(_header, payload) -> Union[UserModel, None]:
     identity = payload["sub"]
     return UserModel.query.filter_by(id=identity).one_or_none()
 
 
 @jwt.token_in_blocklist_loader
-def token_lookup_callback(_header, payload):
+def token_lookup_callback(_header, payload) -> bool:
     jti = payload["jti"]
     token_in_redis = jwt_redis_blocklist.get(jti)
     return token_in_redis is not None
 
 
-def blocklist_token(jti):
+def blocklist_token(jti: str) -> None:
+    """Stores the `jti` in Redis block-listed database
+
+    Args:
+        jti (_type_): jti of the JWT token
+    """
     jwt_redis_blocklist.set(name=jti, value="", ex=timedelta(minutes=30))

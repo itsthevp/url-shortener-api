@@ -24,7 +24,21 @@ from re import fullmatch
 from source.database import UserModel
 
 
-def username_validator(username):
+def username_validator(username: any) -> str:
+    """Validates the `username` by checking it against established constraints
+
+    Args:
+        username (any): `username` from request payload
+
+    Raises:
+        ValueError: if length not between 3 and 20 characters
+        ValueError: if not alpha numeric
+        ValueError: if not unique (already exists in the database)
+
+    Returns:
+        str: `username` will be returned as it is after all checks
+    """
+
     username = str(username).lower()
 
     # Checking for length
@@ -43,7 +57,20 @@ def username_validator(username):
     return username
 
 
-def email_validator(email):
+def email_validator(email: any) -> str:
+    """Validates the `email` by checking it against established constraints
+
+    Args:
+        email (any): `email` from request payload
+
+    Raises:
+        ValueError: if not syntactically valid email address
+        ValueError: if not unique (already exists in the database)
+
+    Returns:
+        str: `email` will be returned as it is after all checks
+    """
+
     email = str(email).lower()
     regex = r"\b[a-z0-9._%+-]+@[a-z0-9.-]+\.[a-z]{2,}\b"
 
@@ -59,7 +86,19 @@ def email_validator(email):
     return email
 
 
-def password_validator(password):
+def password_validator(password: any) -> str:
+    """Validates the `password` by checking it against established constraints
+
+    Args:
+        password (any): `password` from request payload
+
+    Raises:
+        ValueError: if not between 8 to 20 characters
+
+    Returns:
+        str: `password` will be returned as it is after all checks
+    """
+
     password = str(password)
 
     if not 8 <= len(password) <= 20:
@@ -68,7 +107,19 @@ def password_validator(password):
     return password
 
 
-def url_validator(url):
+def url_validator(url: any) -> str:
+    """Validates the `url` by checking it against established constraints
+
+    Args:
+        url (any): `url` from request payload
+
+    Raises:
+        ValueError: if not a valid URL syntactically
+
+    Returns:
+        str: `url` will be returned as it is after all checks
+    """
+
     url = str(url)
     regex = (
         "((http|https)://)(www.)?"
@@ -84,5 +135,14 @@ def url_validator(url):
     return url
 
 
-def bool_validator(value):
+def bool_validator(value: any) -> bool:
+    """Validates the `value` by checking it against established constraints
+
+    Args:
+        value (any): any value
+
+    Returns:
+        bool: True if value is either `true` or 1 else False
+    """
+
     return value is not None and str(value).lower() in ("true", 1)

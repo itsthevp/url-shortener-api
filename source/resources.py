@@ -50,6 +50,7 @@ from source.marshallers import (
 class Index(Resource):
     @api.response(204, "No Content")
     def get(self):
+        """Endpoint for Liveness Probe"""
         return None, 204
 
 
@@ -58,6 +59,7 @@ class Go(Resource):
     @api.response(200, "Success", url_basic_response)
     @api.response(404, "Not Found")
     def get(self, slug: str):
+        """Endpoint for getting target url from slug"""
         if slug and slug.isalnum():
             url = URLModel.query.filter_by(slug=slug).one_or_none()
             if url and url.active:
@@ -73,6 +75,7 @@ class Login(Resource):
     @user_namespace.response(200, "Success", login_response)
     @user_namespace.response(400, "Bad Request")
     def post(self):
+        """Endpoint for User Login"""
         data = login_parser.parse_args(strict=True)
         user = UserModel.query.filter_by(username=data["username"]).one_or_none()
         if user and check_password_hash(user.password, data["password"]):
@@ -96,6 +99,7 @@ class Logout(Resource):
     @jwt_required(optional=True)
     @user_namespace.response(204, "No Content")
     def get(self):
+        """Endpoint for User Logout"""
         jwt = get_jwt()
         if jwt:
             blocklist_token(jwt["jti"])
@@ -109,6 +113,7 @@ class Register(Resource):
     @user_namespace.response(400, "Bad Request")
     @user_namespace.response(500, "Server Error")
     def post(self):
+        """Endpoint for User Registration"""
         data = register_parser.parse_args(strict=True)
         data["password"] = generate_password_hash(data["password"])
         user = UserModel(**data)
@@ -125,6 +130,7 @@ class User(Resource):
         user_detailed_response, code=200, description="Success"
     )
     def get(self):
+        """Endpoint for getting details about logged user"""
         current_user.urls.all()
         return current_user
 
@@ -134,6 +140,7 @@ class User(Resource):
     @user_namespace.response(304, "Not Modified")
     @user_namespace.response(400, "Bad Request")
     def patch(self):
+        """Endpoint for updating details of logged user"""
         data = user_update_parser.parse_args()
         if not any(data.values()):
             return None, 304
@@ -155,6 +162,7 @@ class User(Resource):
     @user_namespace.response(200, "Success")
     @user_namespace.response(304, "Not Modified")
     def delete(self):
+        """Endpoint for deleting logged user"""
         deleted = current_user.delete_from_db()
         if deleted:
             blocklist_token(get_jwt()["jti"])
@@ -168,6 +176,7 @@ class Short(Resource):
     @url_namespace.response(201, "Success", url_detailed_response)
     @url_namespace.response(500, "Server Error")
     def post(self):
+        """Endpoint for URL Shortening"""
         data = short_url_parser.parse_args(strict=True)
         url = URLModel(**data)
         url.slug = self.__get_unique_slug()
@@ -193,6 +202,7 @@ class URL(Resource):
     @url_namespace.response(200, "Success", url_detailed_response)
     @url_namespace.response(404, "Not Found")
     def get(self, url_id: int):
+        """Endpoint for getting details about specific shortened URL"""
         url = self.__get_url_object(current_user.id, url_id)
         if url:
             return marshal(url, url_detailed_response), 200
@@ -205,6 +215,7 @@ class URL(Resource):
     @url_namespace.response(400, "Bad Request")
     @url_namespace.response(404, "Not Found")
     def patch(self, url_id: int):
+        """Endpoint for updating details about specific shortened URL"""
         data = url_update_parser.parse_args(strict=True)
         if not any(v is not None for v in data.values()):
             return None, 304
@@ -227,6 +238,7 @@ class URL(Resource):
     @url_namespace.response(200, "Success")
     @url_namespace.response(304, "Not Modified")
     def delete(self, url_id: int):
+        """Endpoint for deactivating specific shortened URL"""
         url = self.__get_url_object(current_user.id, url_id)
         if url:
             url.active = False
