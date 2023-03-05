@@ -19,6 +19,8 @@
  CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
  """
 
+from os import environ
+
 from source.app import app
 from source.database import db
 from source.api import api
@@ -35,4 +37,4 @@ with app.app_context():
 
 
 if __name__ == "__main__":
-    app.run()
+    app.run(host="0.0.0.0", port=environ.get("FLASK_PORT", 5000))
